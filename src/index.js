@@ -1,17 +1,16 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import * as serviceWorker from './serviceWorker';
+/**
+ * 入口文件
+ */
+// 1.引入
+import React from 'react'
+import ReactDOM from 'react-dom'
+// 3.引入根组件
+import App from './App'
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
-);
+// 4.引入antd-mobile的样式
+import 'antd-mobile/dist/antd-mobile.css'
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.unregister();
+// 5.引入自己定义的全局样式,要覆盖antd-mobile的样式
+import './index.css'
+// 2.渲染
+ReactDOM.render(<App></App>,document.getElementById('root'))
