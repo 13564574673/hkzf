@@ -8,7 +8,7 @@ import React from 'react'
 class HouseList extends React.Component{
   render(){
     return(
-      <div className="home">
+      <div className="house-list">
         <p>HouseList页面</p>
       </div>
     )

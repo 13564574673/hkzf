@@ -9,7 +9,8 @@ import App from './App'
 
 // 4.引入antd-mobile的样式
 import 'antd-mobile/dist/antd-mobile.css'
-
+// 引入iconfont 图标
+import './assets/fonts/iconfont.css'
 // 5.引入自己定义的全局样式,要覆盖antd-mobile的样式
 import './index.css'
 // 2.渲染

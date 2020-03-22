@@ -8,7 +8,7 @@ import React from 'react'
 class News extends React.Component{
   render(){
     return(
-      <div className="home">
+      <div className="news">
         <p>News页面</p>
       </div>
     )

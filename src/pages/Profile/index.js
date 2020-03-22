@@ -8,7 +8,7 @@ import React from 'react'
 class Profile extends React.Component{
   render(){
     return(
-      <div className="home">
+      <div className="profile">
         <p>Profile页面</p>
       </div>
     )
