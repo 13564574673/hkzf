@@ -12,6 +12,8 @@ import Home from './pages/Home'
 import CityList from './pages/CityList'
 // 引入antd-mobile 里面的组件
 // import { Button } from 'antd-mobile';
+// 引入百度地图组件
+import Map from './pages/Map'
 // 2.类组件
 class App extends React.Component {
   render() {
@@ -22,6 +24,7 @@ class App extends React.Component {
           <Route exact path="/" render={()=><Redirect to="/home"/>}></Route>
           <Route path="/home" component={Home}></Route>
           <Route path="/city-list" component={CityList}></Route>
+          <Route path="/map" component={Map}></Route>
         </div>
       </BrowserRouter>
     )

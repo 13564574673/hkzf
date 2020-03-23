@@ -8,7 +8,7 @@
 - 脚手架：create-react-app 
 - 数据请求：axios 
 - UI组件库： antd-mobile 
-- 其他组件库： react-virtualized、formik+yup、react-spring 等 
+- 其他组件库： react-virtualized、formik+yup、react-spring、node-sass 等 
 - 百度地图 API
 
 ### 项目结构
@@ -35,9 +35,11 @@
     HouseList/  找房页面
     News/       资讯页面
     Profile/    个人中心页面
+    Map/        百度地图
 ```
 
 ### 项目中两种布局方式
 - 有tabBar  => Home 页面： 在路由内部切换路由(嵌套路由)
 
 - 没有tabBar => CityList 页面、Map 地图、HouseList 页面
+121.374197,31.037776
