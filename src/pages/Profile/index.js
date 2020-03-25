@@ -10,6 +10,7 @@ class Profile extends React.Component{
     return(
       <div className="profile">
         <p>Profile页面</p>
+        <h1 className="red">我是profile里面的h1</h1>
       </div>
     )
   }

@@ -74,6 +74,7 @@ class Home extends React.Component {
       </div>
     )
   }
+  // 底部 tabBar 渲染函数
   renderTabs(){
     return tabItems.map(item=>(    
         <TabBar.Item
