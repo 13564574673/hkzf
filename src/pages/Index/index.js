@@ -5,6 +5,7 @@
 import React from 'react'
 import { Carousel,Flex,WingBlank,Toast } from 'antd-mobile'
 import axios from 'axios'
+import {getCurrentCity} from '../../utils'
 
 import './index.scss'
 
@@ -179,7 +180,7 @@ class Index extends React.Component{
     )
   }
   
-  componentDidMount() {
+  async componentDidMount() {
     // 封装一个方法，请求轮播图数据
     this.loadSwipersDate()
     // 租房小组数据
@@ -187,7 +188,11 @@ class Index extends React.Component{
     // 最新资讯数据
     this.getNews()
     // 获取当前定位城市
-    this.getCurrentCity()
+    // this.getCurrentCity()
+    let {label} = await getCurrentCity()
+    this.setState({
+      currentCityName : label
+    })    
   }
   //  *****************渲染元素*****************
   // 租房小组封装渲染方法

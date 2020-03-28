@@ -1,0 +1,13 @@
+.nav-header {
+  :global{
+    .icon-back{
+      color: #333;
+    }
+    .am-navbar{
+      background-color: #f4f4f4;
+      .am-navbar-title{
+        color: #333;
+      }
+    }
+  }
+}
