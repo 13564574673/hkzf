@@ -7,8 +7,9 @@ import styles from './index.module.scss'
 // 2.类组件
 class NavHeader extends React.Component{
   render(){
+    const {className} = this.props
     return(
-      <div className={styles['nav-header']}>
+      <div className={styles['nav-header'] +' '+ className}>
         <NavBar
           mode="light"
           icon={<i className="iconfont icon-back"></i>}

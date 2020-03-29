@@ -1,5 +1,5 @@
 .map{
-  overflow: hidden;
+  // overflow: hidden;
   height: 100%;
   :global(#container){
     height: 100%;
@@ -185,12 +185,20 @@
     color: #5aabfd;
     background: #e6f2ff;
   }
-  .am-navbar{
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 50px;
-    width: 100%;
-    z-index: 1;
+  // .am-navbar{
+  //   position: fixed;
+  //   top: 0;
+  //   left: 0;
+  //   height: 50px;
+  //   width: 100%;
+  //   z-index: 1;
+  // }
+}
+
+// ------------
+.map{
+  padding-top: 50px;
+  .myNavbar{
+    margin-top: -50px;
   }
 }

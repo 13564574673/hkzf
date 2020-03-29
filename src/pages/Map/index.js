@@ -4,6 +4,8 @@ import NavHeader from '../../components/NavHeader'
 import styles from './index.module.scss'
 import {getCurrentCity} from '../../utils'
 import axios from 'axios'
+// 引入加载组件
+import {Toast} from 'antd-mobile'
 // 2.类组件
 class Map extends React.Component{
   // ********************* 操作数据 ************************
@@ -17,7 +19,7 @@ class Map extends React.Component{
     return(
       <div className={styles.map}>
         {/* 导航栏 */}
-        <NavHeader>地图找房</NavHeader>
+        <NavHeader className={styles.myNavbar}>地图找房</NavHeader>
         {/* 地图详情 */}
         <div id="container"></div>
 
@@ -47,11 +49,28 @@ class Map extends React.Component{
     this.value = value
     // console.log( label,value );
 
-    // 2.地址解析
+    // 2.创建地图实例
     const BMap = window.BMap
     var map = new BMap.Map("container");
     this.map = map
+    // 监听缩放比例
+    map.addEventListener('zoomend',(e)=>{
+      var ZoomNum = map.getZoom()
+      console.log( '滚动缩放比例',ZoomNum );
+    })
+    // 添加平移缩放控件
+    map.addControl(new BMap.NavigationControl())
 
+    // 给 地图注册一个事件
+    map.addEventListener('movestart',()=>{
+      if(this.state.isShowHouseList){
+        console.log( '移动了' );
+        this.setState({
+          isShowHouseList:false
+        })
+      }
+
+    })
     // 3.创建地址解析器实例
     var myGeo = new BMap.Geocoder();
     // 将地址解析结果显示在地图上,并调整地图视野
@@ -59,125 +78,171 @@ class Map extends React.Component{
       if (point) {
         map.centerAndZoom(point, 11);
         // 渲染覆盖物 - 区
-        this.renderOverlays_QU(value)        
+        this.renderOverlays(value)        
       }else{
         console.log("您选择地址没有解析到结果!");
       }
     }, label);
   }
-  // 渲染覆盖物-区
-  async renderOverlays_QU(id){
+
+  // --------------------被封装的部分 start-----------------
+  
+  /**
+   *  封装方法1：渲染覆盖物-(区 镇 小区)
+   * 区：传递 市的id => 渲染 区的覆盖物
+   * 镇：传递 区的id => 渲染 镇的覆盖物
+   * 小区：传递 镇的id => 渲染 小区的覆盖物
+   */
+  async renderOverlays(id){
+    Toast.loading('loading...',0)
     // 1.根据id值获取 所有的区
     let res = await axios.get(`http://localhost:8080/area/map?id=${id}`)
     // console.log( res );
+
+    // 手动隐藏加载框
+    Toast.hide()
+    
+    // 3.计算类型 和下一次的缩放级别
+    const {type,nextZoom} = this.getTaypeAndNextZoom()
+    console.log( '类型:',type,'下一次缩放级别:',nextZoom );
     // 2.解构请求获取的值 进行判断，有值才进行下面的渲染
     const {status,body} = res.data
     if(status === 200){
-      body.forEach(item=>{
-        // console.log( item );
-        // 3.解构区里面的数据
-        const {count,coord:{longitude,latitude},value,label} = item
-        // console.log( latitude,longitude );
-        // 样式
-        // 4.根据 latitude,longitude，创建 point 实例
-        const {myLabel,point} = this.mapRender(longitude,latitude)
-        // 渲染
-        myLabel.setContent(`
-        <div class="${styles.bubble}">
-          <p class="${styles.name}">${label}</p>
-          <p >${count}套</p>
-        </div>
-        `)
-        // 5.注册点击事件
-        myLabel.addEventListener('click',()=>{
-          console.log( point );
-          // console.log( '111' );
-          // 1.修改缩放级别
-          this.map.centerAndZoom(point, 13);
-          // 2.清除区的覆盖物
-          setTimeout(()=>{
-            this.map.clearOverlays()
-          },0)
-          // 3.渲染镇的覆盖物
-          this.renderOverlays_ZHEN(value)
-        })
-        this.map.addOverlay(myLabel);  
+      // 遍历
+      body.forEach(item =>{
+        this.createOverlays(item,type,nextZoom)
       })
     }
   }
 
-  // 渲染覆盖物-镇
-  async renderOverlays_ZHEN(id){
-    let res = await axios.get(`http://localhost:8080/area/map?id=${id}`)
-    // console.log( res );
-    // 2.解构请求获取的值 进行判断，有值才进行下面的渲染
-    const {status,body} = res.data
-    if(status === 200){
-      body.forEach(item=>{
-        // console.log( item );
-        // 3.解构区里面的数据
-        const {count,coord:{longitude,latitude},value,label} = item
-        // console.log( latitude,longitude );
-        // 4.根据 latitude,longitude，创建 point 实例
-        const {myLabel,point} = this.mapRender(longitude,latitude)
-        // 渲染
-        myLabel.setContent(`
-        <div class="${styles.bubble}">
-          <p class="${styles.name}">${label}</p>
-          <p >${count}套</p>
-        </div>
-        `)
-        // 5.注册点击事件
-        myLabel.addEventListener('click',()=>{
-          // console.log( '111' );
-          // 1.修改缩放级别
-          this.map.centerAndZoom(point, 15);
-          // 2.清除区的覆盖物
-          setTimeout(()=>{
-            this.map.clearOverlays()
-          },0)
-          // 3.渲染镇的覆盖物
-          this.renderOverlays_XIAOQU(value)
-        })
-        this.map.addOverlay(myLabel);  
-      })
+  /**
+   *  封装方法2：创建覆盖物
+   */
+  createOverlays(item,type,nextZoom){
+    if(type === 'circle'){
+      this.createCircle(item,nextZoom)
+    }else{
+      this.createRect(item)
     }
   }
-  // 渲染覆盖物-小区
-  async renderOverlays_XIAOQU(id){
-    let res = await axios.get(`http://localhost:8080/area/map?id=${id}`)
-    // console.log( res );
-    // 2.解构请求获取的值 进行判断，有值才进行下面的渲染
-    const {status,body} = res.data
-    if(status === 200){
-      body.forEach(item=>{
-        // console.log( item );
-        // 3.解构区里面的数据
-        const {count,coord:{longitude,latitude},value,label} = item
-        // console.log( latitude,longitude );
-        // 4.根据 latitude,longitude，创建 point 实例
-        const {myLabel,point} = this.mapRender(longitude,latitude,-50,-14)
-        // 渲染
-        myLabel.setContent(`
-        <div class="${styles.rect}">
-          <span class="${styles.housename}">${label}</span>
-          <span class="${styles.housename}">${count}套</span>
-          <i class="${styles.arrow}"></i>
-        </div>
-        `)
-        
-        // 5.注册点击事件
-        myLabel.addEventListener('click',()=>{
-          this.loadHouseListData(value)
-        })
-        this.map.addOverlay(myLabel);  
-      })
+  /**
+   * 封装方法3：渲染圆覆盖物
+   */
+  createCircle(item,nextZoom){
+    // 1.解构数据
+    const {count,coord:{longitude,latitude},value,label} = item
+    const BMap = window.BMap
+    const point = new BMap.Point(longitude,latitude)
+    // 2.创建文本覆盖物
+    var opts = {
+      position : point,    // 指定文本标注所在的地理位置
+      offset   : new BMap.Size(-35, -35)    //设置文本偏移量
     }
+    var myLabel = new BMap.Label("欢迎使用百度地", opts);  // 创建文本标注对象
+    myLabel.setStyle({
+      height : "0",
+      lineHeight : "0",
+      border:'none'
+    });
+    // 3.渲染
+    myLabel.setContent(`
+    <div class="${styles.bubble}">
+      <p class="${styles.name}">${label}</p>
+      <p >${count}套</p>
+    </div>
+    `)
+    // 4.注册点击事件
+    myLabel.addEventListener('click',()=>{
+      // console.log( '111' );
+      // 1.修改缩放级别
+      this.map.centerAndZoom(point, nextZoom);
+      // 2.清除区的覆盖物
+      setTimeout(()=>{
+        this.map.clearOverlays()
+      },0)
+      // 3.渲染镇的覆盖物
+      this.renderOverlays(value)
+    })
+    this.map.addOverlay(myLabel);  
   }
+
+  /**
+   * 封装方法4：渲染方覆盖物
+   */
+  createRect(item){
+    // 1.解构数据
+    const {count,coord:{longitude,latitude},value,label} = item
+    const BMap = window.BMap
+    const point = new BMap.Point(longitude,latitude)
+    // 2.创建文本覆盖物
+    var opts = {
+      position : point,    // 指定文本标注所在的地理位置
+      offset   : new BMap.Size(-50, -14)    //设置文本偏移量
+    }
+    var myLabel = new BMap.Label("欢迎使用百度地", opts);  // 创建文本标注对象
+    myLabel.setStyle({
+      height : "0",
+      lineHeight : "0",
+      border:'none'
+    });
+
+    // 3.渲染
+    myLabel.setContent(`
+    <div class="${styles.rect}">
+      <span class="${styles.housename}">${label}</span>
+      <span class="${styles.housename}">${count}套</span>
+      <i class="${styles.arrow}"></i>
+    </div>
+    `)
+    // 4.注册点击事件
+    // debugger
+    myLabel.addEventListener('click',(e)=>{
+      this.loadHouseListData(value)
+      let x = e.changedTouches[0].clientX - (window.innerWidth/2)
+      let y = e.changedTouches[0].clientY - 50 - (window.innerHeight-330-50)/2
+      // console.log( clientX );
+      // console.log( clientY );
+      // 偏移
+      this.map.panBy(-x,-y)
+    })
+    this.map.addOverlay(myLabel);  
+  }
+    /**
+   *  封装方法5：计算类型和下一次缩放级别
+   */
+  getTaypeAndNextZoom(){
+    // 11 13 =>圆 circle
+    // 15    =>方 rect
+    // 1.获取当前类型
+    let curZoom = this.map.getZoom()
+    // 覆盖物类型
+    let type =''
+    // 下一次缩放级别
+    let nextZoom
+    console.log( '当前缩放级别',curZoom );
+
+    // 2.判断
+    if(curZoom >10 && curZoom <= 12){
+      type='circle'
+      nextZoom = 13
+    }else if(curZoom >12 && curZoom <= 14){
+      type='circle'
+      nextZoom = 15
+    }else{
+      type='rect'
+    }
+    return {type,nextZoom}
+  }
+
+  // --------------------被封装的部分 end-----------------
+
   // 点击小区：请求小区的房屋列表
   async loadHouseListData(id){
+    Toast.loading('loading...',0)
     // 1.根据小区的id 获取小区的房屋列表数据
     let res = await axios.get(`http://localhost:8080/houses?cityId=${id}`)
+    // 手动隐藏加载框
+    Toast.hide()
     console.log( res );
     // 2.解构请求获取的值 进行判断，有值才进行下面的渲染
     const {status,body} = res.data
@@ -222,24 +287,6 @@ class Map extends React.Component{
         </div>
       )
     })
-  }
-  // 地图初始渲染封装
-  mapRender(longitude,latitude,left=-35,top=-35){
-    const BMap = window.BMap
-    const point = new BMap.Point(longitude,latitude)
-    // 添加文本覆盖物
-    var opts = {
-      position : point,    // 指定文本标注所在的地理位置
-      offset   : new BMap.Size(left, top)    //设置文本偏移量
-    }
-    var myLabel = new BMap.Label("欢迎使用百度地", opts);  // 创建文本标注对象
-    myLabel.setStyle({
-      height : "0",
-      lineHeight : "0",
-      border:'none'
-    });
-    // console.log( point );
-    return {point,myLabel}
   }
 }
 
